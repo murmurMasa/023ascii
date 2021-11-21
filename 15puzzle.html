@@ -112,7 +112,7 @@ function moveBlock(event) {
           //全ブロックを枠線無しで表示
           for (var x = 0; x < 4; x++) {
               for (var y = 0; y < 4; y++) {
-                  blocks[masu[x][y].show();         //Block.show()メソッドを実行する
+                  blocks[masu[x][y]].show();         //Block.show()メソッドを実行する
               }
           }       
        }    
@@ -124,8 +124,8 @@ function checkEmpty(x, y) {
     var dir = null;
     if ((y-1 >= 0) && (masu[x][y-1] == null)) dir = "up";   //上に空きマスがある
     if ((y+1 < 4) && (masu[x][y+1] == null)) dir = "down";  //下に空きマスがある
-    if ((X-1 >= 0) && (masu[x-1][y] == null)) dir = "left"; //左に空きマスがある
-    if ((X+1 < 4) && (masu[x+1][y] == null)) dir = "right"; //右に空きマスがある
+    if ((x-1 >= 0) && (masu[x-1][y] == null)) dir = "left"; //左に空きマスがある
+    if ((x+1 < 4) && (masu[x+1][y] == null)) dir = "right"; //右に空きマスがある
     return dir;    
 }
 
