@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>15パズル</title>
+<script>
+var blocks = new Array();       //ブロック（連想配列）
+var masu = new Array();         //マス（二次元配列）
+var count;                      //移動数
+var width = 60;                 //ブロックの大きさ
+var height = 60;                //ひとつのブロックは６０×６０ドット
+
+function Block(x, y) {                  //Blockクラスを作成
+   this.id = "block_" + x + "_" + y;    //ブロックのID
+   this.x = x;                          //ブロックの位置　x,yは0～3の範囲
+   this.y = y;
+
+   //ブロックを作成
+   var block = document.createElement("button");        //ボタン要素を作成する
+   block.id = this.id;
+   block.style.width = width + "px";                    //ブロックの横幅、高さ
+   block.style.height = height + "px";
+   block.style.left = width * x + "px";                 //ブロックの左上の座標
+   block.style.top = height * y + "px";
+   block.style.backgroundImage = "url(puzzle.jpg)";     //画像のファイル名
+   block.style.backgroundPosition = (-1) * width * x + "px " + (-1) * height * y + "px";    //画像の表示開始位置
+   block.onclick = moveBlock;                           //moveBlock()関数
+   document.getElementById("puzzle").appendChild(block);  //パズル表示エリアID　子要素(block)を追加する
+}
+
+Block.prototype.move = function(x, y) {
+    //移動
+    this.x = x;
+    this.y = y;
+    document.getElementById(this.id).style.left = width * x + "px";
+    document.getElementById(this.id).style.top = height * y + "px";
+};
+
+Block.prototype.show = function() {
+    //枠線無しで表示
+    document.getElementById(this.id).style.display = "inline";  //ブロック（ボタン）をインライン要素として表示
+    document.getElementById(this.id).classList.add("noborder"); //class名"noborder"を追加
+};
+
+function init() {
+    //15パズルをセット
+    document.getElementById("puzzle").style.width = width * 4 + "px";   //ブロック4個分（＝240ドット）の横幅と高さに設定
+    document.getElementById("puzzle").style.height = height * 4 + "px"; //パズル表示エリアＩＤ
+    initpuzzle();                                                       //パズルを初期化する関数を実行
+}
+
+function　startpuzzle() {
+    //シャッフル
+    initpuzzle();
+    shuffle();              //パズルをシャッフルする関数を実行
+
+    //右下のマスからブロックを削除
+    document.getElementById(masu[3][3]).style.display = "none";
+    masu[3][3] = null;
+
+    //スタート
+    document.getElementById("message").innerHTML = "スタート！";
+    count = 0;
+}
+
+function initpuzzle() {
+    //初期化
+    document.getElementById("message").innerHTML = "";      //メッセージとパズルを消す
+    document.getElementById("puzzle").innerHTML = "";
+
+    //４×４のマスとブロックを作成
+    for (var x = 0; x < 4; x++) {
+        masu[x] = new Array(4);             //二次元配列の作成
+        for (var y=0; y < 4; y++) {
+            var block = new Block(x, y);    //ブロックの作成
+            blocks[block.id] = block;       //連想配列blocksに入れる
+            masu[x][y] = block.id;          //idは、block_x_y(block_0_0、block_0_1、･･･）という文字列
+        }
+    }
+}
+
+function moveBlock(event) {
+    //ブロックを取得
+    var block = blocks[event.target.id];    //クリックしたボタンのID
+    var x = Number(block.x);
+    var y = Number(block.y);                //数値化する
+
+    //空いているマスを調べる
+    var targetX = x;
+    var targetY = y;
+    var dir = checkEmpty(x, y);             //空きマスを調べる関数を実行
+    if (dir == "up") targetY = y-1;         //上が空きマスならtargetYをy-1に
+    if (dir == "down") targetY = y+1;       //空いているマスに応じてtargetXまたはtargetYの値を調整
+    if (dir == "left") targetX = x-1;
+    if (dir == "right") targetX = x+1;
+
+    //ブロックを空きマスへ移動
+    if (dir != null) {                      //上下左右に空きますがあったとき
+       block.move(targetX, targetY);        //Block.move()メソッドを実行する
+       masu[targetX][targetY] = masu[x][y]; //ブロックを空きマスへ移動
+       masu[x][y] = null;
+
+       //移動数
+       count++;                             //変数countに1を足す
+       document.getElementById("message").innerHTML = "移動数：" + count;   //メッセージ表示エリアのID
+
+       //正誤判定
+       if (checkMasu() == "ok") {           //完成判定関数
+          document.getElementById("message").innerHTML += "...完成！";
+          //右下のマスにブロックをセット
+          masu[3][3] = "block_3_3";
+          //全ブロックを枠線無しで表示
+          for (var x = 0; x < 4; x++) {
+              for (var y = 0; y < 4; y++) {
+                  blocks[masu[x][y].show();         //Block.show()メソッドを実行する
+              }
+          }       
+       }    
+    }
+}
+
+function checkEmpty(x, y) {
+    //上下左右の空きを調べる
+    var dir = null;
+    if ((y-1 >= 0) && (masu[x][y-1] == null)) dir = "up";   //上に空きマスがある
+    if ((y+1 < 4) && (masu[x][y+1] == null)) dir = "down";  //下に空きマスがある
+    if ((X-1 >= 0) && (masu[x-1][y] == null)) dir = "left"; //左に空きマスがある
+    if ((X+1 < 4) && (masu[x+1][y] == null)) dir = "right"; //右に空きマスがある
+    return dir;    
+}
+
+function checkMasu() {
+    //ブロックのIDとマスの一がすべて一致していればOK
+    var result = "ok";
+    for (var x = 0; x < 4; x++) {
+        for (var y = 0; y < 4; y++) {
+            var id = masu[x][y];            //masu[x][y]を調べる
+            if (id != null) {               //空きマスでないなら
+            if (id.split("_")[1] != x) result = "ng";
+            if (id.split("_")[2] != y) result = "ng";
+            }
+        }
+    }
+    return result;
+}
+
+function shuffle() {
+    //ブロックの並び順をシャッフル（右下のブロックを除く）
+    for (var i=14; i > 0; i--) {
+        var j = Math.floor(Math.random() * i);      //0～iまでの乱数
+        var temp = masu[i%4][(i - (i%4)) / 4];      //余りを求める　２つのマス（配列の中身）を交換する
+        masu[i%4][(i - (i%4)) / 4] = masu[j%4][(j - (j%4)) / 4];
+        masu[j%4][(j - (j%4)) / 4] = temp;
+    }
+
+    //並び順に整列
+    for (var x = 0; x < 4; x++) {
+        for (var y = 0; y < 4; y++) {
+            blocks[masu[x][y]].move(x, y);          //Block.move()メソッドを実行する
+        }
+    }
+}
+</script>
+<style>
+#puzzle {
+    position: relative;             /*パズル表示エリアのスタイルシート*/
+    border: thin solid #CCCCCC;
+}
+#puzzle button {position: absolute;}
+.noborder {border: none;}
+</style>
+</head>
+<body onload="init()">
+<p>15パズル</p>
+<input type="button" id="startButton" value="シャッフル"
+onclick="startpuzzle()">
+<span id="message"></span>
+<hr>
+<div id="puzzle"></div>
+</body>
+</html>
